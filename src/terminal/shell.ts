@@ -206,6 +206,11 @@ export class FakeShell {
 
     const code = data.charCodeAt(0);
 
+    // 处理 F1-F12 功能键转义序列（忽略它们）
+    if (this.isFunctionKey(data)) {
+      return;
+    }
+
     // 处理特殊控制序列
     if (data === '\r') {
       // Enter - 执行命令
@@ -250,6 +255,25 @@ export class FakeShell {
       // data.length > 1 用于处理多字节的 Unicode 字符（如中文）
       this.insertChar(data);
     }
+  }
+
+  /**
+   * 判断是否为 F1-F12 功能键转义序列
+   */
+  private isFunctionKey(data: string): boolean {
+    // F1-F5: \x1B[[A ~ \x1B[[E 或 \x1BOP ~ \x1BOS
+    // F6-F12: \x1B[17~ ~ \x1B[24~
+    const functionKeyPatterns = [
+      /^\x1B\[\[[A-E]$/,           // F1-F5: \x1B[[A, \x1B[[B, etc.
+      /^\x1BO[P-S]$/,              // F1-F4 alternate: \x1BOP, \x1BOQ, etc.
+      /^\x1B\[1[7-9]~$/,           // F6-F8: \x1B[17~, \x1B[18~, \x1B[19~
+      /^\x1B\[2[0-4]~$/,           // F9-F12: \x1B[20~, \x1B[21~, \x1B[23~, \x1B[24~
+      /^\x1B\[25~$/,               // F13 (部分键盘)
+      /^\x1B\[26~$/,               // F14 (部分键盘)
+      /^\x1B\[28~$/,               // F15 (部分键盘)
+      /^\x1B\[29~$/,               // F16 (部分键盘)
+    ];
+    return functionKeyPatterns.some(pattern => pattern.test(data));
   }
 
   /**

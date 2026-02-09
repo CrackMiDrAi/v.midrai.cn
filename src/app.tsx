@@ -1,43 +1,92 @@
-import { useState } from 'preact/hooks'
-import preactLogo from './assets/preact.svg'
-import viteLogo from '/vite.svg'
+import { Terminal } from './terminal/Terminal'
+import { FakeShell, colorize } from './terminal'
+import type { CommandDefinition } from './terminal'
 import './app.css'
 
+/**
+ * 示例：自定义命令
+ */
+const customCommands: CommandDefinition[] = [
+  {
+    name: 'hello',
+    description: 'Say hello to someone',
+    usage: 'hello [name]',
+    execute({ args, output }) {
+      const name = args[0] || 'World'
+      output.println(colorize(`Hello, ${name}! 👋`, 'green'))
+      return 0
+    },
+  },
+  {
+    name: 'neofetch',
+    description: 'Display system information',
+    usage: 'neofetch',
+    execute({ env, output }) {
+      const art = `
+        ${colorize('___', 'green')}
+       ${colorize('(___)', 'green')}    ${colorize('OS:', 'cyan')} Midrai Terminal v1.0
+      ${colorize('/', 'green')}     ${colorize('\\', 'green')}   ${colorize('Shell:', 'cyan')} fake-shell
+     ${colorize('/', 'green')}       ${colorize('\\', 'green')}  ${colorize('User:', 'cyan')} ${env.USER}
+    ${colorize('|', 'green')}  ${colorize('◠', 'yellow')}   ${colorize('◠', 'yellow')}  ${colorize('|', 'green')} ${colorize('Host:', 'cyan')} ${env.HOSTNAME}
+     ${colorize('\\', 'green')}  ${colorize('\\___/', 'green')}  ${colorize('/', 'green')}  ${colorize('Home:', 'cyan')} ${env.HOME}
+      ${colorize('\\', 'green')}       ${colorize('/', 'green')}   ${colorize('Path:', 'cyan')} ${env.PATH}
+       ${colorize('`-----\'', 'green')}
+      `
+      output.println(art)
+      return 0
+    },
+  },
+  {
+    name: 'cowsay',
+    description: 'A cow says something',
+    usage: 'cowsay [message]',
+    execute({ args, output }) {
+      const message = args.join(' ') || 'Moo!'
+      const len = message.length
+      const border = '-'.repeat(len + 2)
+      
+      const cow = `
+ ${border}
+< ${message} >
+ ${border}
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||
+      `
+      output.println(cow)
+      return 0
+    },
+  },
+]
+
 export function App() {
-  const [count, setCount] = useState(0)
+  const handleReady = (shell: FakeShell) => {
+    console.log('Terminal is ready!', shell)
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://preactjs.com" target="_blank">
-          <img src={preactLogo} class="logo preact" alt="Preact logo" />
-        </a>
-      </div>
-      <h1>Vite + Preact</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/app.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p>
-        Check out{' '}
-        <a
-          href="https://preactjs.com/guide/v10/getting-started#create-a-vite-powered-preact-app"
-          target="_blank"
-        >
-          create-preact
-        </a>
-        , the official Preact + Vite starter
-      </p>
-      <p class="read-the-docs">
-        Click on the Vite and Preact logos to learn more
-      </p>
+      <Terminal
+        initialPath="/home/guest"
+        env={{
+          USER: 'guest',
+          HOSTNAME: 'midrai',
+          HOME: '/home/guest',
+        }}
+        welcomeMessage={`
+${colorize('╔══════════════════════════════════════════════════════════╗', 'blue')}
+${colorize('║', 'blue')}  ${colorize('Welcome to Midrai Terminal v1.0', 'green')}                         ${colorize('║', 'blue')}
+${colorize('║', 'blue')}  ${colorize('A fake Linux terminal emulator', 'cyan')}                          ${colorize('║', 'blue')}
+${colorize('╚══════════════════════════════════════════════════════════╝', 'blue')}
+
+This is a simulated Linux environment with a virtual file system.
+Type ${colorize('"help"', 'yellow')} to see available commands.
+`}
+        customCommands={customCommands}
+        onReady={handleReady}
+      />
     </>
   )
 }
