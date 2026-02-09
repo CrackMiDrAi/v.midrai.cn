@@ -37,6 +37,7 @@ export function Terminal({
   welcomeMessage = 'Welcome to Midrai Terminal v1.0\nType "help" to see available commands.',
   promptFormat,
   customCommands = [],
+  onCommand,
   onReady,
 }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +98,7 @@ export function Terminal({
     // 打开终端并连接
     terminal.open(containerRef.current);
     shell.attach(terminal);
+    if (onCommand) shell.setOnCommand(onCommand);
 
     // 调整大小
     const resizeObserver = new ResizeObserver(() => {

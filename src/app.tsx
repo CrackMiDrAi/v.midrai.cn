@@ -2,6 +2,9 @@ import { Terminal } from './terminal/Terminal'
 import { FakeShell, colorize } from './terminal'
 import type { CommandDefinition } from './terminal'
 import './app.css'
+import { useRef } from 'preact/hooks'
+import { ExamSystem } from './exam'
+import { dockerExam } from './exam/examples'
 
 /**
  * 示例：自定义命令
@@ -62,9 +65,31 @@ const customCommands: CommandDefinition[] = [
 ]
 
 export function App() {
+  const examRef = useRef<ExamSystem>(null);
+
   const handleReady = (shell: FakeShell) => {
-    console.log('Terminal is ready!', shell)
-  }
+    console.log('Terminal is ready!', shell);
+
+    if (!examRef.current) {
+      examRef.current = new ExamSystem({
+        exams: [ dockerExam ],
+        onGraded(result) {
+          console.log(result);
+        },
+      });
+    }
+
+    examRef.current.attach(shell);
+    for (const cmd of examRef.current.getExamCommands()) {
+      shell.registerCommand(cmd);
+    }
+  };
+
+  const handleCommand = (command: string) => {
+    if (!examRef.current) return;
+
+    examRef.current.onCommand(command);
+  };
 
   return (
     <>
@@ -85,6 +110,7 @@ This is a simulated Linux environment with a virtual file system.
 Type ${colorize('"help"', 'yellow')} to see available commands.
 `}
         customCommands={customCommands}
+        onCommand={handleCommand}
         onReady={handleReady}
       />
     </>

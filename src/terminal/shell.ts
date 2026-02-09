@@ -30,6 +30,7 @@ export class FakeShell {
   private historyIndex: number = -1;
   private isProcessing: boolean = false;
   private options: ShellOptions;
+  private onCommandCallback: ((command: string) => void) | null = null;
 
   constructor(options: ShellOptions = {}) {
     this.options = options;
@@ -167,6 +168,14 @@ export class FakeShell {
    */
   registerCommand(command: CommandDefinition): void {
     this.cli.registerCommand(command);
+  }
+
+  /**
+   * 设置命令执行回调
+   * 用于考试系统等需要监听命令执行的场景
+   */
+  setOnCommand(callback: (command: string) => void): void {
+    this.onCommandCallback = callback;
   }
 
   /**
@@ -479,6 +488,11 @@ export class FakeShell {
     this.terminal?.writeln('');
 
     if (command) {
+      // 触发命令执行回调（用于考试系统等）
+      if (this.onCommandCallback) {
+        this.onCommandCallback(command);
+      }
+
       // 添加到历史记录
       this.commandHistory.push(command);
       this.historyIndex = -1;
